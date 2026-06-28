@@ -9,6 +9,17 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+  :root.light-mode {
+    --paper: #FAF8F3;
+    --paper-dim: #F2EEE4;
+    --paper-raised: #EAE5D8;
+    --ink: #1A2332;
+    --ink-soft: #2D3B52;
+    --slate: #6B7280;
+    --slate-light: #9CA3AF;
+    --rule: #D8D2C4;
+    --rule-strong: #C4BCA8;
+  }
   :root {
     --paper: #14181F;
     --paper-dim: #1B212B;
@@ -35,6 +46,49 @@
     font-family: var(--sans);
     line-height: 1.6;
     overflow-x: hidden;
+    position: relative;
+  }
+
+  .bg-mesh {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: -1;
+    overflow: hidden;
+  }
+
+  .bg-mesh::before, .bg-mesh::after {
+    content: '';
+    position: absolute;
+    width: 60vw; height: 60vw;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.18;
+  }
+
+  .bg-mesh::before {
+    background: var(--amber);
+    top: -10%; left: -10%;
+    animation: float1 22s ease-in-out infinite;
+  }
+
+  .bg-mesh::after {
+    background: #4A6FA5;
+    bottom: -10%; right: -10%;
+    animation: float2 26s ease-in-out infinite;
+  }
+
+  @keyframes float1 {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(8vw, 10vh); }
+  }
+
+  @keyframes float2 {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(-8vw, -8vh); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bg-mesh::before, .bg-mesh::after { animation: none; }
   }
 
   ::selection { background: var(--amber); color: var(--paper); }
@@ -241,7 +295,15 @@
     color: var(--slate);
   }
 
-  .entry {
+  .entry { position: relative; }
+
+  .entry-canvas {
+    position: absolute;
+    top: 0; right: 0;
+    width: 140px; height: 100%;
+    opacity: 0.12;
+    pointer-events: none;
+  }.entry {
     border: 1px solid var(--rule);
     border-radius: 4px;
     margin-bottom: 14px;
@@ -446,6 +508,37 @@
 
   footer a:hover { color: var(--amber); border-color: var(--amber); }
 
+  .cursor-dot {
+    position: fixed;
+    width: 6px;
+    height: 6px;
+    background: var(--amber);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: width 0.2s, height 0.2s, background 0.2s;
+  }
+
+  @media (max-width: 768px) {
+    .cursor-dot { display: none; }
+  }
+  .tracker-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--rule-strong);
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+  }
+
+  .tracker-dot.active {
+    background: var(--amber);
+    transform: scale(1.4);
+  }
+
+  @media (max-width: 900px) {
+    #sectionTracker { display: none; }
+  }
   @media (max-width: 640px) {
     .stats { grid-template-columns: repeat(2, 1fr); }
     .stat:nth-child(2) { border-right: none; }
@@ -460,13 +553,17 @@
 </head>
 <body>
 
-<div class="wrap">
-  <header>
+<div id="bootScreen" style="position:fixed; inset:0; background:#0A0D12; z-index:99999; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; color:#8B9099; font-size:13px;">
+  <div id="bootText" style="white-space:pre-line;"></div>
+<div style="position:absolute; inset:0; background:repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 2px); pointer-events:none;"></div>
+</div>
+<canvas id="heroCanvas" style="position:fixed; top:0; left:0; width:100%; height:100vh; z-index:-1; opacity:0.35;"></canvas> 
+ <header>
     <div class="term-bar">
       <span class="dot"></span><span class="dot"></span><span class="dot"></span>
       <span class="term-path">hanningtone@nairobi:~</span>
     </div>
-    <div class="type-line" id="typeLine"></div>
+    <div class="type-line" id="typeLine" style="min-height:1.5em;"></div>>
     <p class="tagline" id="tagline">Backend engineer from Nairobi. I build the things other developers treat as a black box; compilers, consensus algorithms, caches, blockchains; to actually understand how they work.</p>
     <div class="links" id="links">
       <a href="https://github.com/Hanningtone03" target="_blank">github.com/Hanningtone03</a>
@@ -476,9 +573,9 @@
   </header>
 
   <div class="stats">
-    <div class="stat">
-      <div class="stat-num">23</div>
-      <div class="stat-label">Systems built</div>
+   <div class="stat" id="liveStatCard" style="cursor:default;">
+      <div class="stat-num" id="countUp">0</div>
+      <div class="stat-label" id="liveStatLabel">Systems built</div>
     </div>
     <div class="stat">
       <div class="stat-num">7</div>
@@ -499,6 +596,7 @@
     <h2>Projects</h2>
     <p class="section-intro">No frameworks or libraries doing the hard part. Filter by language, then expand any entry.</p>
 
+    <input type="text" id="searchInput" placeholder="Search projects..." style="margin-top:24px; width:100%; max-width:320px; padding:10px 14px; background:var(--paper-dim); border:1px solid var(--rule); border-radius:6px; color:var(--ink); font-family:var(--mono); font-size:13px; outline:none;">
     <div class="filter-bar" id="filterBar"></div>
     <div class="manifest" id="manifest"></div>
     <p class="empty-state" id="emptyState" style="display:none;">Nothing matches that filter.</p>
@@ -534,9 +632,29 @@
     </div>
   </section>
 
+  <div id="projectModal" style="display:none; position:fixed; inset:0; background:rgba(15,18,24,0.85); z-index:1000; align-items:center; justify-content:center; padding:24px;">
+    <div style="background:var(--paper-dim); border:1px solid var(--rule-strong); border-radius:10px; max-width:520px; width:100%; padding:32px; position:relative;">
+      <button id="modalClose" style="position:absolute; top:16px; right:16px; background:none; border:none; color:var(--slate); font-size:20px; cursor:pointer;">✕</button>
+      <div id="modalLangBadge" class="lang-badge" style="margin-bottom:14px; display:inline-block;"></div>
+      <h2 id="modalTitle" style="margin-bottom:14px;"></h2>
+      <p id="modalDesc" style="color:var(--ink-soft); font-size:15px; margin-bottom:24px;"></p>
+      <a id="modalLink" href="#" target="_blank" class="entry-link" style="font-size:14px;">View full source on GitHub →</a>
+    </div>
+  </div>
   <footer>
-    <span>Built without a framework, same as everything above.</span>
-    <a href="https://github.com/Hanningtone03" target="_blank">github.com/Hanningtone03</a>
+    <span id="uptimeCounter">calculating...</span>    <a href="https://github.com/Hanningtone03" target="_blank">github.com/Hanningtone03</a>
+  </footer>
+  <button id="themeToggle" style="position:fixed; bottom:20px; left:140px; background:var(--paper-raised); border:1px solid var(--rule); color:var(--slate); font-family:var(--mono); font-size:11px; padding:8px 12px; border-radius:6px; cursor:pointer;">☀️ light mode</button>
+  <button id="soundToggle" style="position:fixed; bottom:20px; left:20px; background:var(--paper-raised); border:1px solid var(--rule); color:var(--slate); font-family:var(--mono); font-size:11px; padding:8px 12px; border-radius:6px; cursor:pointer;">🔇 sound off</button>
+
+  <div id="sectionTracker" style="position:fixed; left:24px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; gap:14px; z-index:100;">
+    <div class="tracker-dot" data-target="projects" title="Projects"></div>
+    <div class="tracker-dot" data-target="demo" title="Live demo"></div>
+    <div class="tracker-dot" data-target="open-source" title="Open source"></div>
+  </div>
+  <div id="kbdHint" style="position:fixed; bottom:20px; right:20px; font-family:var(--mono); font-size:11px; color:var(--slate-light); opacity:0; transition:opacity 0.4s;">
+    press <kbd style="background:var(--paper-raised); padding:2px 6px; border-radius:3px; border:1px solid var(--rule);">/</kbd> to search projects
+  </div>
   </footer>
 </div>
 
@@ -567,7 +685,129 @@
     { name: "build-your-own-http-server", lang: "js", flagship: false, desc: "Raw HTTP/1.1 request parsing and response building directly on top of TCP sockets.", url: "https://github.com/Hanningtone03/build-your-own-http-server" },
   ];
 
+  function burstConfetti(originEl) {
+    const rect = originEl.getBoundingClientRect();
+    for (let i = 0; i < 14; i++) {
+      const piece = document.createElement('div');
+      piece.style.cssText = `position:fixed; width:5px; height:5px; background:#D88A4E; left:${rect.left + rect.width/2}px; top:${rect.top}px; z-index:9999; border-radius:1px; pointer-events:none;`;
+      document.body.appendChild(piece);
+      const angle = Math.random() * Math.PI * 2;
+      const velocity = 2 + Math.random() * 3;
+      let vx = Math.cos(angle) * velocity;
+      let vy = Math.sin(angle) * velocity - 3;
+      let opacity = 1;
+      const fall = setInterval(() => {
+        vy += 0.15;
+        const left = parseFloat(piece.style.left) + vx;
+        const top = parseFloat(piece.style.top) + vy;
+        piece.style.left = left + 'px';
+        piece.style.top = top + 'px';
+        opacity -= 0.03;
+        piece.style.opacity = opacity;
+        if (opacity <= 0) {
+          clearInterval(fall);
+          piece.remove();
+        }
+      }, 16);
+    }
+  }
   const manifest = document.getElementById('manifest');
+  const heroCanvas = document.getElementById('heroCanvas');
+  const hctx = heroCanvas.getContext('2d');
+  function resizeHero() {
+    heroCanvas.width = window.innerWidth;
+    heroCanvas.height = window.innerHeight;
+  }
+  resizeHero();
+  window.addEventListener('resize', resizeHero);
+
+  const nodes = Array.from({ length: 28 }, () => ({
+    x: Math.random() * heroCanvas.width,
+    y: Math.random() * heroCanvas.height,
+    vx: (Math.random() - 0.5) * 0.3,
+    vy: (Math.random() - 0.5) * 0.3,
+  }));
+
+  function animateHero() {
+    hctx.clearRect(0, 0, heroCanvas.width, heroCanvas.height);
+    nodes.forEach(n => {
+      n.x += n.vx; n.y += n.vy;
+      if (n.x < 0 || n.x > heroCanvas.width) n.vx *= -1;
+      if (n.y < 0 || n.y > heroCanvas.height) n.vy *= -1;
+    });
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const dx = nodes[i].x - nodes[j].x, dy = nodes[i].y - nodes[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 160) {
+          hctx.strokeStyle = `rgba(216,138,78,${1 - dist / 160})`;
+          hctx.lineWidth = 0.6;
+          hctx.beginPath();
+          hctx.moveTo(nodes[i].x, nodes[i].y);
+          hctx.lineTo(nodes[j].x, nodes[j].y);
+          hctx.stroke();
+        }
+      }
+      hctx.fillStyle = '#D88A4E';
+      hctx.beginPath();
+      hctx.arc(nodes[i].x, nodes[i].y, 2, 0, Math.PI * 2);
+      hctx.fill();
+    }
+    requestAnimationFrame(animateHero);
+  }
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) animateHero();
+  
+  let count = 0;
+  const countEl = document.getElementById('countUp');
+  const countTarget = 23;
+  const countInterval = setInterval(() => {
+    count++;const heroCanvas = document.getElementById('heroCanvas');
+  const hctx = heroCanvas.getContext('2d');
+  function resizeHero() {
+    heroCanvas.width = window.innerWidth;
+    heroCanvas.height = window.innerHeight;
+  }
+  resizeHero();
+  window.addEventListener('resize', resizeHero);
+
+  const nodes = Array.from({ length: 28 }, () => ({
+    x: Math.random() * heroCanvas.width,
+    y: Math.random() * heroCanvas.height,
+    vx: (Math.random() - 0.5) * 0.3,
+    vy: (Math.random() - 0.5) * 0.3,
+  }));
+
+  function animateHero() {
+    hctx.clearRect(0, 0, heroCanvas.width, heroCanvas.height);
+    nodes.forEach(n => {
+      n.x += n.vx; n.y += n.vy;
+      if (n.x < 0 || n.x > heroCanvas.width) n.vx *= -1;
+      if (n.y < 0 || n.y > heroCanvas.height) n.vy *= -1;
+    });
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const dx = nodes[i].x - nodes[j].x, dy = nodes[i].y - nodes[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 160) {
+          hctx.strokeStyle = `rgba(216,138,78,${1 - dist / 160})`;
+          hctx.lineWidth = 0.6;
+          hctx.beginPath();
+          hctx.moveTo(nodes[i].x, nodes[i].y);
+          hctx.lineTo(nodes[j].x, nodes[j].y);
+          hctx.stroke();
+        }
+      }
+      hctx.fillStyle = '#D88A4E';
+      hctx.beginPath();
+      hctx.arc(nodes[i].x, nodes[i].y, 2, 0, Math.PI * 2);
+      hctx.fill();
+    }
+    requestAnimationFrame(animateHero);
+  }
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) animateHero();
+    countEl.textContent = count;
+    if (count >= countTarget) clearInterval(countInterval);
+  }, 45);
   const filterBar = document.getElementById('filterBar');
   const emptyState = document.getElementById('emptyState');
 
@@ -607,6 +847,7 @@
           </div>
           <span class="entry-chevron">›</span>
         </div>
+        <canvas class="entry-canvas" width="400" height="60"></canvas>
         <div class="entry-body">
           <div class="entry-body-inner">
             <p>${p.desc}</p>
@@ -621,8 +862,61 @@
     });
   }
 
+  const startDate = new Date('2026-06-06T00:00:00Z');
+  function updateUptime() {
+    const now = new Date();
+    const diff = now - startDate;
+    const days = Math.floor(diff / 86400000);
+    const hours = Math.floor((diff % 86400000) / 3600000);
+    const mins = Math.floor((diff % 3600000) / 60000);
+    document.getElementById('uptimeCounter').textContent = `${days}d ${hours}h ${mins}m building`;
+  }
+  updateUptime();
+  setInterval(updateUptime, 60000);
+  fetch('https://api.github.com/users/Hanningtone03')
+    .then(r => r.json())
+    .then(data => {
+      const card = document.getElementById('liveStatCard');
+      card.addEventListener('mouseenter', () => {
+        document.getElementById('countUp').textContent = data.followers;
+        document.getElementById('liveStatLabel').textContent = 'GitHub followers';
+      });
+      card.addEventListener('mouseleave', () => {
+        document.getElementById('countUp').textContent = '23';
+        document.getElementById('liveStatLabel').textContent = 'Systems built';
+      });
+    })
+    .catch(() => {});
   renderFilters('all');
   renderManifest();
+  function drawCanvasFor(canvas, lang) {
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+    ctx.strokeStyle = '#D88A4E';
+    ctx.lineWidth = 1;
+    if (lang === 'go' || lang === 'c') {
+      for (let i = 0; i < 5; i++) {
+        ctx.beginPath();
+        ctx.arc(20 + i * 35, h / 2, 6, 0, Math.PI * 2);
+        ctx.stroke();
+        if (i > 0) {
+          ctx.beginPath();
+          ctx.moveTo(20 + (i - 1) * 35 + 6, h / 2);
+          ctx.lineTo(20 + i * 35 - 6, h / 2);
+          ctx.stroke();
+        }
+      }
+    } else {
+      for (let i = 0; i < w; i += 8) {
+        const bar = Math.sin(i * 0.1) * 15 + 20;
+        ctx.fillStyle = '#D88A4E';
+        ctx.globalAlpha = 0.5;
+        ctx.fillRect(i, h - bar, 4, bar);
+      }
+    }
+  }
+
+  document.querySelectorAll('.entry-canvas').forEach((c, i) => drawCanvasFor(c, projects[i].lang));
 
   let currentFilter = 'all';
 
@@ -634,16 +928,26 @@
     applyFilter();
   });
 
+  let searchTerm = '';
+
   function applyFilter() {
     const entries = manifest.querySelectorAll('.entry');
     let visibleCount = 0;
-    entries.forEach(entry => {
-      const match = currentFilter === 'all' || entry.dataset.lang === currentFilter;
+    entries.forEach((entry, i) => {
+      const p = projects[i];
+      const langMatch = currentFilter === 'all' || entry.dataset.lang === currentFilter;
+      const searchMatch = !searchTerm || p.name.toLowerCase().includes(searchTerm) || p.desc.toLowerCase().includes(searchTerm);
+      const match = langMatch && searchMatch;
       entry.classList.toggle('hidden', !match);
       if (match) visibleCount++;
     });
     emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
   }
+
+  document.getElementById('searchInput').addEventListener('input', (e) => {
+    searchTerm = e.target.value.toLowerCase();
+    applyFilter();
+  });
 
   manifest.addEventListener('click', (e) => {
     const copyBtn = e.target.closest('.copy-btn');
@@ -652,6 +956,7 @@
         const original = copyBtn.textContent;
         copyBtn.textContent = 'copied';
         copyBtn.classList.add('copied');
+        burstConfetti(copyBtn);
         setTimeout(() => {
           copyBtn.textContent = original;
           copyBtn.classList.remove('copied');
@@ -662,10 +967,16 @@
 
     const head = e.target.closest('.entry-head');
     if (!head) return;
-    const entry = head.closest('.entry');
-    entry.classList.toggle('open');
+    const idx = parseInt(head.dataset.idx);
+    const p = projects[idx];
+    openModal(p);
   });
 
+  const statsBar = document.querySelector('.stats');
+  window.addEventListener('scroll', () => {
+    const offset = window.scrollY;
+    statsBar.style.transform = `translateY(${offset * -0.08}px)`;
+  });
   const revealEls = document.querySelectorAll('.reveal');
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
@@ -677,11 +988,55 @@
   }, { threshold: 0.12 });
 
   revealEls.forEach(el => observer.observe(el));
+  const trackerDots = document.querySelectorAll('.tracker-dot');
+  trackerDots.forEach(dot => {
+    dot.addEventListener('click', () => {
+      document.getElementById(dot.dataset.target).scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+
+  const sectionObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const dot = document.querySelector(`.tracker-dot[data-target="${entry.target.id}"]`);
+      if (!dot) return;
+      if (entry.isIntersecting) {
+        trackerDots.forEach(d => d.classList.remove('active'));
+        dot.classList.add('active');
+      }
+    });
+  }, { threshold: 0.5 });
+
+  ['projects', 'demo', 'open-source'].forEach(id => {
+    sectionObserver.observe(document.getElementById(id));
+  });
 
   const typeEl = document.getElementById('typeLine');
   const fullText = 'Hanningtone Ombati';
   let charIndex = 0;
 
+  const bootLines = [
+    'initializing portfolio...',
+    'loading 23 repositories...',
+    'verifying CI status... ok',
+    'rendering interface...',
+  ];
+  const bootEl = document.getElementById('bootText');
+  let bootIdx = 0;
+  function bootStep() {
+    if (bootIdx < bootLines.length) {
+      bootEl.textContent += (bootIdx > 0 ? '\n' : '') + bootLines[bootIdx];
+      bootIdx++;
+      setTimeout(bootStep, 280);
+    } else {
+      setTimeout(() => {
+        const screen = document.getElementById('bootScreen');
+        screen.style.transition = 'opacity 0.5s';
+        screen.style.opacity = '0';
+        setTimeout(() => screen.remove(), 500);
+      }, 300);
+    }
+  }
+  bootStep();
   function typeChar() {
     if (charIndex <= fullText.length) {
       typeEl.innerHTML = `<span class="cmd">${fullText.slice(0, charIndex)}</span><span class="cursor"></span>`;
@@ -693,6 +1048,29 @@
     }
   }
 
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches && window.matchMedia('(min-width: 769px)').matches) {
+    const dot = document.createElement('div');
+    dot.className = 'cursor-dot';
+    document.body.appendChild(dot);
+
+    document.addEventListener('mousemove', (e) => {
+      dot.style.left = e.clientX + 'px';
+      dot.style.top = e.clientY + 'px';
+    });
+
+    document.querySelectorAll('a, .filter-chip, .entry-head, .copy-btn').forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        dot.style.width = '16px';
+        dot.style.height = '16px';
+        dot.style.background = 'var(--amber-dim)';
+      });
+      el.addEventListener('mouseleave', () => {
+        dot.style.width = '6px';
+        dot.style.height = '6px';
+        dot.style.background = 'var(--amber)';
+      });
+    });
+  }
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     typeEl.innerHTML = `<span class="cmd">${fullText}</span>`;
     document.getElementById('tagline').classList.add('show');
@@ -700,8 +1078,108 @@
   } else {
     typeChar();
   }
+  setTimeout(() => {
+    document.getElementById('kbdHint').style.opacity = '1';
+  }, 2500);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+      e.preventDefault();
+      document.getElementById('searchInput')?.focus();
+    }
+  });
+  let soundOn = false;
+  const soundBtn = document.getElementById('soundToggle');
+  const clickCtx = window.AudioContext ? new AudioContext() : null;
+
+  function playTick(freq = 440, duration = 0.04) {
+    if (!soundOn || !clickCtx) return;
+    const osc = clickCtx.createOscillator();
+    const gain = clickCtx.createGain();
+    osc.frequency.value = freq;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.05, clickCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, clickCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(clickCtx.destination);
+    osc.start();
+    osc.stop(clickCtx.currentTime + duration);
+  }
+
+  const themeBtn = document.getElementById('themeToggle');
+  themeBtn.addEventListener('click', () => {
+    document.documentElement.classList.toggle('light-mode');
+    const isLight = document.documentElement.classList.contains('light-mode');
+    themeBtn.textContent = isLight ? '🌙 dark mode' : '☀️ light mode';
+  });
+  soundBtn.addEventListener('click', () => {
+    soundOn = !soundOn;
+    soundBtn.textContent = soundOn ? '🔊 sound on' : '🔇 sound off';
+    if (soundOn) playTick(600, 0.06);
+  });
+
+  document.querySelectorAll('.filter-chip, .entry-head, .copy-btn, .entry-link').forEach(el => {
+    el.addEventListener('mouseenter', () => playTick(880, 0.03));
+    el.addEventListener('click', () => playTick(440, 0.05));
+  });
+  const modal = document.getElementById('projectModal');
+
+  function openModal(p) {
+    document.getElementById('modalTitle').textContent = p.name;
+    document.getElementById('modalDesc').textContent = p.desc;
+    document.getElementById('modalLangBadge').textContent = '.' + p.lang;
+    document.getElementById('modalLink').href = p.url;
+    modal.style.display = 'flex';
+    playTick(660, 0.05);
+  }
+
+  document.getElementById('modalClose').addEventListener('click', () => {
+    modal.style.display = 'none';
+  });
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.style.display = 'none';
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') modal.style.display = 'none';
+  });
+
+  let typedBuffer = '';
+  document.addEventListener('keydown', (e) => {
+    typedBuffer += e.key.toLowerCase();
+    if (typedBuffer.length > 10) typedBuffer = typedBuffer.slice(-10);
+    if (typedBuffer.includes('raft')) {
+      typedBuffer = '';
+      runRaftEasterEgg();
+    }
+  });
+
+  function runRaftEasterEgg() {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(10,13,18,0.95);z-index:99998;display:flex;align-items:center;justify-content:center;font-family:IBM Plex Mono,monospace;color:#D88A4E;font-size:14px;flex-direction:column;gap:10px;';
+    overlay.innerHTML = '<div id="raftLog" style="white-space:pre-line;text-align:center;"></div>';
+    document.body.appendChild(overlay);
+    const log = overlay.querySelector('#raftLog');
+    const lines = [
+      'node 2: starting election for term 5',
+      'node 1: voted for node 2',
+      'node 3: voted for node 2',
+      'node 2: became LEADER for term 5',
+      '',
+      'you found the raft easter egg.',
+    ];
+    let i = 0;
+    const interval = setInterval(() => {
+      log.textContent += (i > 0 ? '\n' : '') + lines[i];
+      i++;
+      if (i >= lines.length) {
+        clearInterval(interval);
+        setTimeout(() => overlay.remove(), 2200);
+      }
+    }, 450);
+  }
 </script>
 
 </body>
 </html>
-HTMLEOF
