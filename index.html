@@ -96,9 +96,13 @@
   a { color: inherit; }
 
   .wrap {
-    max-width: 860px;
+    max-width: 1080px;
     margin: 0 auto;
-    padding: 0 28px;
+    padding: 0 48px;
+  }
+
+  @media (max-width: 768px) {
+    .wrap { padding: 0 24px; }
   }
 
   /* ===== Header / terminal hero ===== */
@@ -258,7 +262,18 @@
 
   /* ===== Manifest (project list) ===== */
 
-  .manifest { margin-top: 28px; }
+  .manifest {
+    margin-top: 28px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  .manifest .entry { margin-bottom: 0; }
+
+  @media (max-width: 768px) {
+    .manifest { grid-template-columns: 1fr; }
+  }
 
   .filter-bar {
     margin-top: 32px;
@@ -1037,15 +1052,37 @@
     }
   }
   bootStep();
-  function typeChar() {
-    if (charIndex <= fullText.length) {
-      typeEl.innerHTML = `<span class="cmd">${fullText.slice(0, charIndex)}</span><span class="cursor"></span>`;
-      charIndex++;
-      setTimeout(typeChar, 55);
-    } else {
-      document.getElementById('tagline').classList.add('show');
-      document.getElementById('links').classList.add('show');
-    }
+  function scrambleIn() {
+    const chars = '!<>-_\\/[]{}—=+*^?#';
+    const finalChars = fullText.split('');
+    const spans = finalChars.map(c => {
+      const span = document.createElement('span');
+      span.textContent = c === ' ' ? '\u00A0' : chars[Math.floor(Math.random() * chars.length)];
+      span.style.color = 'var(--slate-light)';
+      return span;
+    });
+    typeEl.innerHTML = '';
+    spans.forEach(s => typeEl.appendChild(s));
+    finalChars.forEach((finalChar, i) => {
+      let frame = 0;
+      const maxFrames = 8 + Math.floor(Math.random() * 6);
+      const scrambleInterval = setInterval(() => {
+        if (frame < maxFrames) {
+          spans[i].textContent = finalChar === ' ' ? '\u00A0' : chars[Math.floor(Math.random() * chars.length)];
+          frame++;
+        } else {
+          spans[i].textContent = finalChar === ' ' ? '\u00A0' : finalChar;
+          spans[i].style.color = 'var(--ink)';
+          clearInterval(scrambleInterval);
+          if (i === finalChars.length - 1) {
+            setTimeout(() => {
+              document.getElementById('tagline').classList.add('show');
+              document.getElementById('links').classList.add('show');
+            }, 200);
+          }
+        }
+      }, 40 + i * 4);
+    });
   }
 
   if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches && window.matchMedia('(min-width: 769px)').matches) {
@@ -1076,7 +1113,7 @@
     document.getElementById('tagline').classList.add('show');
     document.getElementById('links').classList.add('show');
   } else {
-    typeChar();
+    scrambleIn();
   }
   setTimeout(() => {
     document.getElementById('kbdHint').style.opacity = '1';
