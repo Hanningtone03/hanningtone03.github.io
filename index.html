@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hanningtone Ombati — Backend Engineer</title>
+<meta name="description" content="Backend engineer from Nairobi. 23 systems built from scratch — compilers, consensus algorithms, caches, blockchains — across 7 languages.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #14181F;
+    --paper-dim: #1B212B;
+    --paper-raised: #222934;
+    --ink: #EDEAE2;
+    --ink-soft: #C7C2B6;
+    --slate: #8B9099;
+    --slate-light: #5C6370;
+    --amber: #D88A4E;
+    --amber-dim: #8A5A33;
+    --rule: #2B313D;
+    --rule-strong: #3A4250;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Inter', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  ::selection { background: var(--amber); color: var(--paper); }
+
+  a { color: inherit; }
+
+  .wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+
+  /* ===== Header / terminal hero ===== */
+
+  header {
+    padding: 100px 0 64px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .term-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 28px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--slate-light);
+  }
+
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--rule-strong); }
+
+  .term-path { letter-spacing: 0.02em; }
+
+  .type-line {
+    font-family: var(--mono);
+    font-size: clamp(22px, 4.5vw, 34px);
+    font-weight: 500;
+    color: var(--ink);
+    white-space: pre-wrap;
+    line-height: 1.5;
+  }
+
+  .type-line .prompt { color: var(--amber); }
+  .type-line .cmd { color: var(--ink); }
+
+  .cursor {
+    display: inline-block;
+    width: 0.55ch;
+    height: 1em;
+    background: var(--amber);
+    vertical-align: -0.12em;
+    animation: blink 1s steps(1) infinite;
+  }
+
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .tagline {
+    margin-top: 28px;
+    font-size: 18px;
+    color: var(--ink-soft);
+    max-width: 560px;
+    opacity: 0;
+  }
+
+  .tagline.show { animation: fadeUp 0.6s ease forwards; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .links {
+    margin-top: 28px;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    opacity: 0;
+  }
+
+  .links.show { animation: fadeUp 0.6s ease 0.15s forwards; }
+
+  .links a {
+    font-family: var(--mono);
+    font-size: 14px;
+    text-decoration: none;
+    color: var(--ink-soft);
+    border-bottom: 1px solid var(--rule-strong);
+    padding-bottom: 2px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .links a:hover { color: var(--amber); border-color: var(--amber); }
+
+  /* ===== Stats ===== */
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .stat {
+    padding: 28px 0;
+    text-align: center;
+    border-right: 1px solid var(--rule);
+  }
+
+  .stat:last-child { border-right: none; }
+
+  .stat-num {
+    font-family: var(--mono);
+    font-size: clamp(22px, 4vw, 30px);
+    font-weight: 600;
+    color: var(--amber);
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--slate);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 4px;
+  }
+
+  /* ===== Section labels ===== */
+
+  section { padding: 72px 0; border-bottom: 1px solid var(--rule); }
+  section:last-of-type { border-bottom: none; }
+
+  section.reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+
+  section.reveal.in-view {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    section.reveal { opacity: 1; transform: none; }
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--amber);
+    letter-spacing: 0.04em;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+
+  h2 {
+    font-family: var(--mono);
+    font-size: clamp(22px, 3.4vw, 28px);
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .section-intro {
+    margin-top: 14px;
+    color: var(--slate);
+    max-width: 600px;
+    font-size: 16px;
+  }
+
+  /* ===== Manifest (project list) ===== */
+
+  .manifest { margin-top: 28px; }
+
+  .filter-bar {
+    margin-top: 32px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .filter-chip {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--slate);
+    background: var(--paper-dim);
+    border: 1px solid var(--rule);
+    padding: 6px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    user-select: none;
+  }
+
+  .filter-chip:hover { border-color: var(--rule-strong); color: var(--ink-soft); }
+
+  .filter-chip.active {
+    background: var(--amber-dim);
+    border-color: var(--amber);
+    color: var(--ink);
+  }
+
+  .empty-state {
+    margin-top: 24px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--slate);
+  }
+
+  .entry {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    margin-bottom: 14px;
+    overflow: hidden;
+    background: var(--paper-dim);
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .entry:hover { border-color: var(--rule-strong); }
+
+  .entry.hidden { display: none; }
+
+  .entry-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    cursor: pointer;
+    gap: 16px;
+  }
+
+  .entry-head:hover { background: rgba(194, 104, 46, 0.05); }
+
+  .entry-name {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink);
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .lang-badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--slate);
+    background: var(--paper);
+    border: 1px solid var(--rule-strong);
+    padding: 1px 7px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  .entry-chevron {
+    font-family: var(--mono);
+    color: var(--slate-light);
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .entry.open .entry-chevron { transform: rotate(90deg); color: var(--amber); }
+
+  .entry-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease;
+  }
+
+  .entry.open .entry-body { max-height: 280px; }
+
+  .entry-body-inner {
+    padding: 0 20px 20px;
+    font-size: 14.5px;
+    color: var(--ink-soft);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .entry-body-inner p { margin: 0; max-width: 460px; }
+
+  .entry-actions {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .entry-link {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--amber);
+    text-decoration: none;
+    border-bottom: 1px solid var(--amber-dim);
+    white-space: nowrap;
+  }
+
+  .copy-btn {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--slate);
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+    white-space: nowrap;
+  }
+
+  .copy-btn:hover { border-color: var(--rule-strong); color: var(--ink-soft); }
+
+  .copy-btn.copied { color: var(--amber); border-color: var(--amber-dim); }
+
+  .flagship-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--amber);
+    border: 1px solid var(--amber-dim);
+    padding: 1px 6px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* ===== Demo embed ===== */
+
+  .demo-frame-wrap {
+    margin-top: 28px;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    overflow: hidden;
+    background: #0f172a;
+  }
+
+  .demo-frame-bar {
+    background: var(--ink);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .demo-frame-bar .dot { background: var(--slate); }
+
+  .demo-frame-bar span {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--slate-light);
+    margin-left: 8px;
+  }
+
+  iframe {
+    width: 100%;
+    height: 480px;
+    border: none;
+    display: block;
+  }
+
+  /* ===== Open source ===== */
+
+  .os-card {
+    margin-top: 28px;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 24px;
+    background: var(--paper-dim);
+  }
+
+  .os-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .os-card-repo {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  .os-card-meta {
+    font-size: 13px;
+    color: var(--slate);
+  }
+
+  /* ===== Footer ===== */
+
+  footer {
+    padding: 48px 0 64px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: 13px;
+    color: var(--slate);
+  }
+
+  footer a {
+    text-decoration: none;
+    color: var(--ink-soft);
+    border-bottom: 1px solid var(--rule-strong);
+  }
+
+  footer a:hover { color: var(--amber); border-color: var(--amber); }
+
+  @media (max-width: 640px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .stat:nth-child(2) { border-right: none; }
+    header { padding: 64px 0 48px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cursor { animation: none; }
+    .tagline, .links { animation: none; opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="term-bar">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="term-path">hanningtone@nairobi:~</span>
+    </div>
+    <div class="type-line" id="typeLine"></div>
+    <p class="tagline" id="tagline">Backend engineer from Nairobi. I build the things other developers treat as a black box; compilers, consensus algorithms, caches, blockchains; to actually understand how they work.</p>
+    <div class="links" id="links">
+      <a href="https://github.com/Hanningtone03" target="_blank">github.com/Hanningtone03</a>
+      <a href="#projects">projects</a>
+      <a href="#open-source">open source</a>
+    </div>
+  </header>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num">23</div>
+      <div class="stat-label">Systems built</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">7</div>
+      <div class="stat-label">Languages</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">0</div>
+      <div class="stat-label">Frameworks used</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">1</div>
+      <div class="stat-label">Open Source Contributions</div>
+    </div>
+  </div>
+
+  <section id="projects" class="reveal">
+    <div class="eyebrow">Manifest</div>
+    <h2>Projects</h2>
+    <p class="section-intro">No frameworks or libraries doing the hard part. Filter by language, then expand any entry.</p>
+
+    <div class="filter-bar" id="filterBar"></div>
+    <div class="manifest" id="manifest"></div>
+    <p class="empty-state" id="emptyState" style="display:none;">Nothing matches that filter.</p>
+  </section>
+
+  <section id="demo" class="reveal">
+    <div class="eyebrow">Live project</div>
+    <h2>Running at the moment</h2>
+    <p class="section-intro">A component library in vanilla JavaScript; buttons, modals, dropdowns and toasts. Interact with it below.</p>
+    <div class="demo-frame-wrap">
+      <div class="demo-frame-bar">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span>build-your-own-ui-library/demo</span>
+      </div>
+      <iframe src="https://hanningtone03.github.io/build-your-own-UI-library/demo/" loading="lazy" title="UI library live demo"></iframe>
+    </div>
+  </section>
+
+  <section id="open-source" class="reveal">
+    <div class="eyebrow">contribution</div>
+    <h2>Open Source Contributions</h2>
+    <p class="section-intro">Building alone only proves so much in my opinion.</p>
+
+    <div class="os-card">
+      <div class="os-card-top">
+        <span class="os-card-repo">ossf/cve-bin-tool</span>
+        <span class="os-card-meta">250+ contributors · OpenSSF</span>
+      </div>
+      <p style="font-size: 14.5px; color: var(--ink-soft); margin-bottom: 14px;">
+        Added AlmaLinux test coverage for the unbound checker, after confirming the existing test data only covered Fedora, Debian, and OpenWrt with no recent RPM-based distro coverage.
+      </p>
+      <a class="entry-link" href="https://github.com/ossf/cve-bin-tool/pull/5804" target="_blank">View PR #5804 →</a>
+    </div>
+  </section>
+
+  <footer>
+    <span>Built without a framework, same as everything above.</span>
+    <a href="https://github.com/Hanningtone03" target="_blank">github.com/Hanningtone03</a>
+  </footer>
+</div>
+
+<script>
+  const projects = [
+    { name: "raft-consensus", lang: "go", flagship: true, desc: "Leader election, log replication, and commit index advancement across a 3-node cluster — the algorithm behind etcd and CockroachDB.", url: "https://github.com/Hanningtone03/raft-consensus" },
+    { name: "mini-compiler", lang: "c", flagship: true, desc: "A full pipeline from source to execution: lexer, parser, AST, bytecode compiler, and a stack-based VM with proper call frames for recursion.", url: "https://github.com/Hanningtone03/mini-compiler" },
+    { name: "tiny-blockchain", lang: "go", flagship: true, desc: "Proof-of-work mining, merkle trees, and peer-to-peer chain propagation across multiple nodes with longest-chain consensus.", url: "https://github.com/Hanningtone03/tiny-blockchain" },
+    { name: "garbage-collector", lang: "c", flagship: true, desc: "Mark-and-sweep memory management with correct cyclic reference collection — the case naive reference counting can't handle.", url: "https://github.com/Hanningtone03/garbage-collector" },
+    { name: "regex-engine", lang: "c", flagship: false, desc: "Thompson's construction NFA from pattern parsing, matched via subset simulation — no regex library involved anywhere.", url: "https://github.com/Hanningtone03/regex-engine" },
+    { name: "key-value-cache", lang: "cpp", flagship: false, desc: "O(1) LRU cache using a hash map and doubly linked list, with TTL support and a benchmark suite hitting 18M+ ops/sec.", url: "https://github.com/Hanningtone03/key-value-cache" },
+    { name: "build-your-own-distributed-kv", lang: "js", flagship: false, desc: "A key-value store that replicates writes across nodes with version-based conflict resolution.", url: "https://github.com/Hanningtone03/build-your-own-distributed-kv" },
+    { name: "build-your-own-http2-server", lang: "js", flagship: false, desc: "HTTP/2 framing, HPACK header compression, and TLS negotiation, built on top of the HTTP/1.1 server below it.", url: "https://github.com/Hanningtone03/build-your-own-http2-server" },
+    { name: "build-your-own-lsm-storage", lang: "py", flagship: false, desc: "Write-ahead log, memtable, and SSTable compaction — the storage architecture inside LevelDB and RocksDB.", url: "https://github.com/Hanningtone03/build-your-own-lsm-storage" },
+    { name: "build-your-own-docker", lang: "py", flagship: false, desc: "Container runtime using Linux namespaces and cgroups for process isolation and resource limits.", url: "https://github.com/Hanningtone03/build-your-own-docker" },
+    { name: "build-your-own-bundler", lang: "go", flagship: false, desc: "Module resolution, dependency graph construction, and minification — what Webpack and esbuild do under the hood.", url: "https://github.com/Hanningtone03/build-your-own-bundler" },
+    { name: "build-your-own-packet-analyzer", lang: "c", flagship: false, desc: "Raw socket packet capture parsing TCP, UDP, and ICMP straight off the wire — the core of how Wireshark works.", url: "https://github.com/Hanningtone03/build-your-own-packet-analyzer" },
+    { name: "build-your-own-cicd", lang: "go", flagship: false, desc: "A pipeline runner that parses YAML job definitions and executes steps with failure handling and live logging.", url: "https://github.com/Hanningtone03/build-your-own-cicd" },
+    { name: "build-your-own-stream-processor", lang: "java", flagship: false, desc: "Filter, map, and reduce operators chained into pipelines, with sources spanning files, ranges, and generators.", url: "https://github.com/Hanningtone03/build-your-own-stream-processor" },
+    { name: "build-your-own-ui-library", lang: "js", flagship: false, desc: "Five components in vanilla JS — button, card, modal, dropdown, toast — zero dependencies, zero build step.", url: "https://github.com/Hanningtone03/build-your-own-ui-library" },
+    { name: "build-your-own-query-engine", lang: "py", flagship: false, desc: "SQL-like queries executed directly against CSV and JSON files — no database required.", url: "https://github.com/Hanningtone03/build-your-own-query-engine" },
+    { name: "build-your-own-port-scanner", lang: "c", flagship: false, desc: "TCP connect scanning across a port range with service name detection and timeout handling.", url: "https://github.com/Hanningtone03/build-your-own-port-scanner" },
+    { name: "build-your-own-load-balancer", lang: "js", flagship: false, desc: "Round-robin TCP routing across backend servers with health checks and automatic failover.", url: "https://github.com/Hanningtone03/build-your-own-load-balancer" },
+    { name: "build-your-own-git", lang: "py", flagship: false, desc: "Content-addressed object storage, tree and commit objects, and a real commit history walk.", url: "https://github.com/Hanningtone03/build-your-own-git" },
+    { name: "build-your-own-database", lang: "js", flagship: false, desc: "A SQL lexer and parser executing against tables backed by a hand-written B-tree.", url: "https://github.com/Hanningtone03/build-your-own-database" },
+    { name: "build-your-own-shell", lang: "py", flagship: false, desc: "A REPL that parses commands, handles pipes between processes, and runs built-ins directly.", url: "https://github.com/Hanningtone03/build-your-own-shell" },
+    { name: "build-your-own-redis", lang: "py", flagship: false, desc: "RESP protocol parsing over raw TCP sockets, with TTL expiry and concurrent client handling.", url: "https://github.com/Hanningtone03/build-your-own-redis" },
+    { name: "build-your-own-http-server", lang: "js", flagship: false, desc: "Raw HTTP/1.1 request parsing and response building directly on top of TCP sockets.", url: "https://github.com/Hanningtone03/build-your-own-http-server" },
+  ];
+
+  const manifest = document.getElementById('manifest');
+  const filterBar = document.getElementById('filterBar');
+  const emptyState = document.getElementById('emptyState');
+
+  const langNames = { go: 'Go', c: 'C', cpp: 'C++', js: 'JS', py: 'Python', java: 'Java' };
+  const langsPresent = [...new Set(projects.map(p => p.lang))];
+
+  function renderFilters(active) {
+    filterBar.innerHTML = '';
+    const allChip = document.createElement('div');
+    allChip.className = 'filter-chip' + (active === 'all' ? ' active' : '');
+    allChip.textContent = `All (${projects.length})`;
+    allChip.dataset.lang = 'all';
+    filterBar.appendChild(allChip);
+
+    langsPresent.forEach(lang => {
+      const count = projects.filter(p => p.lang === lang).length;
+      const chip = document.createElement('div');
+      chip.className = 'filter-chip' + (active === lang ? ' active' : '');
+      chip.textContent = `${langNames[lang] || lang} (${count})`;
+      chip.dataset.lang = lang;
+      filterBar.appendChild(chip);
+    });
+  }
+
+  function renderManifest() {
+    manifest.innerHTML = '';
+    projects.forEach((p, i) => {
+      const entry = document.createElement('div');
+      entry.className = 'entry';
+      entry.dataset.lang = p.lang;
+      entry.innerHTML = `
+        <div class="entry-head" data-idx="${i}">
+          <div class="entry-name">
+            ${p.name}
+            <span class="lang-badge">.${p.lang}</span>
+            ${p.flagship ? '<span class="flagship-tag">flagship</span>' : ''}
+          </div>
+          <span class="entry-chevron">›</span>
+        </div>
+        <div class="entry-body">
+          <div class="entry-body-inner">
+            <p>${p.desc}</p>
+            <div class="entry-actions">
+              <button class="copy-btn" data-url="${p.url}">copy link</button>
+              <a class="entry-link" href="${p.url}" target="_blank">View source →</a>
+            </div>
+          </div>
+        </div>
+      `;
+      manifest.appendChild(entry);
+    });
+  }
+
+  renderFilters('all');
+  renderManifest();
+
+  let currentFilter = 'all';
+
+  filterBar.addEventListener('click', (e) => {
+    const chip = e.target.closest('.filter-chip');
+    if (!chip) return;
+    currentFilter = chip.dataset.lang;
+    renderFilters(currentFilter);
+    applyFilter();
+  });
+
+  function applyFilter() {
+    const entries = manifest.querySelectorAll('.entry');
+    let visibleCount = 0;
+    entries.forEach(entry => {
+      const match = currentFilter === 'all' || entry.dataset.lang === currentFilter;
+      entry.classList.toggle('hidden', !match);
+      if (match) visibleCount++;
+    });
+    emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+  }
+
+  manifest.addEventListener('click', (e) => {
+    const copyBtn = e.target.closest('.copy-btn');
+    if (copyBtn) {
+      navigator.clipboard.writeText(copyBtn.dataset.url).then(() => {
+        const original = copyBtn.textContent;
+        copyBtn.textContent = 'copied';
+        copyBtn.classList.add('copied');
+        setTimeout(() => {
+          copyBtn.textContent = original;
+          copyBtn.classList.remove('copied');
+        }, 1400);
+      });
+      return;
+    }
+
+    const head = e.target.closest('.entry-head');
+    if (!head) return;
+    const entry = head.closest('.entry');
+    entry.classList.toggle('open');
+  });
+
+  const revealEls = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in-view');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+
+  revealEls.forEach(el => observer.observe(el));
+
+  const typeEl = document.getElementById('typeLine');
+  const fullText = 'Hanningtone Ombati';
+  let charIndex = 0;
+
+  function typeChar() {
+    if (charIndex <= fullText.length) {
+      typeEl.innerHTML = `<span class="cmd">${fullText.slice(0, charIndex)}</span><span class="cursor"></span>`;
+      charIndex++;
+      setTimeout(typeChar, 55);
+    } else {
+      document.getElementById('tagline').classList.add('show');
+      document.getElementById('links').classList.add('show');
+    }
+  }
+
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    typeEl.innerHTML = `<span class="cmd">${fullText}</span>`;
+    document.getElementById('tagline').classList.add('show');
+    document.getElementById('links').classList.add('show');
+  } else {
+    typeChar();
+  }
+</script>
+
+</body>
+</html>
+HTMLEOF
