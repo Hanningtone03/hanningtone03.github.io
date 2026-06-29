@@ -254,8 +254,14 @@
     max-width: 600px;
   }
 
+  .eyebrow, h2, .section-intro {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
   .section-intro {
-    margin: 14px 0 0;
+    margin-top: 14px;
   }
 
   .section-intro {
@@ -1059,37 +1065,16 @@
     }
   }
   bootStep();
-  function scrambleIn() {
-    const chars = '!<>-_\\/[]{}—=+*^?#';
-    const finalChars = fullText.split('');
-    const spans = finalChars.map(c => {
-      const span = document.createElement('span');
-      span.textContent = c === ' ' ? '\u00A0' : chars[Math.floor(Math.random() * chars.length)];
-      span.style.color = 'var(--slate-light)';
-      return span;
-    });
-    typeEl.innerHTML = '';
-    spans.forEach(s => typeEl.appendChild(s));
-    finalChars.forEach((finalChar, i) => {
-      let frame = 0;
-      const maxFrames = 8 + Math.floor(Math.random() * 6);
-      const scrambleInterval = setInterval(() => {
-        if (frame < maxFrames) {
-          spans[i].textContent = finalChar === ' ' ? '\u00A0' : chars[Math.floor(Math.random() * chars.length)];
-          frame++;
-        } else {
-          spans[i].textContent = finalChar === ' ' ? '\u00A0' : finalChar;
-          spans[i].style.color = 'var(--ink)';
-          clearInterval(scrambleInterval);
-          if (i === finalChars.length - 1) {
-            setTimeout(() => {
-              document.getElementById('tagline').classList.add('show');
-              document.getElementById('links').classList.add('show');
-            }, 200);
-          }
-        }
-      }, 40 + i * 4);
-    });
+  let charIndex = 0;
+  function typeChar() {
+    if (charIndex <= fullText.length) {
+      typeEl.innerHTML = `<span class="cmd">${fullText.slice(0, charIndex)}</span><span class="cursor"></span>`;
+      charIndex++;
+      setTimeout(typeChar, 55);
+    } else {
+      document.getElementById('tagline').classList.add('show');
+      document.getElementById('links').classList.add('show');
+    }
   }
 
   if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches && window.matchMedia('(min-width: 769px)').matches) {
@@ -1121,7 +1106,7 @@
       document.getElementById('tagline').classList.add('show');
       document.getElementById('links').classList.add('show');
     } else {
-      scrambleIn();
+      typeChar();
     }
   } catch (err) {
     console.error('Hero animation failed:', err);
