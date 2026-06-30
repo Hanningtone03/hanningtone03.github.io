@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hanningtone Ombati — Backend Engineer</title>
 <meta name="description" content="Backend engineer from Nairobi. 23 systems built from scratch — compilers, consensus algorithms, caches, blockchains — across 7 languages.">
+<meta property="og:title" content="Hanningtone Ombati — Backend Engineer">
+<meta property="og:description" content="23 systems built from scratch across 7 languages — compilers, consensus algorithms, caches, blockchains.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://hanningtone03.github.io">
+<meta name="twitter:card" content="summary">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -207,6 +212,14 @@
   }
 
   .stat:last-child { border-right: none; }
+
+  @keyframes statPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+    100% { transform: scale(1); }
+  }
+
+  .stat-num.pulse { animation: statPulse 0.5s ease; }
 
   .stat-num {
     font-family: var(--mono);
@@ -581,6 +594,11 @@
     .cursor { animation: none; }
     .tagline, .links { animation: none; opacity: 1; }
   }
+  @media print {
+    .bg-mesh, #soundToggle, #themeToggle, #sectionTracker, #kbdHint, .cursor-dot, iframe { display: none !important; }
+    body { background: white; color: black; }
+    .entry-body { max-height: none !important; }
+  }
 </style>
 </head>
 <body>
@@ -597,11 +615,12 @@
     </div>
     <div class="type-line" id="typeLine" style="min-height:1.5em;"></div>>
     <p class="tagline" id="tagline">Backend engineer from Nairobi. I build the things other developers treat as a black box; compilers, consensus algorithms, caches, blockchains; to actually understand how they work.</p>
+    <div id="buildingBadge" style="display:none; font-family:var(--mono); font-size:12px; color:var(--amber); margin-top:16px;"></div>
     <div class="links" id="links">
       <a href="https://github.com/Hanningtone03" target="_blank">github.com/Hanningtone03</a>
       <a href="mailto:hanningtoneombati@gmail.com">hanningtoneombati@gmail.com</a>
       <a href="tel:+254706664863">+254 706 664 863</a>
-      <a href="#projects">projects</a>
+      <a href="#projects" class="nav-fade">projects</a>
       <a href="#open-source">open source</a>
     </div>
   </header>
@@ -649,6 +668,13 @@
     </div>
   </section>
 
+  <section id="activity" class="reveal">
+    <div class="eyebrow">Activity</div>
+    <h2>What the graph looks like</h2>
+    <p class="section-intro">No padding, no gaming the streak. Just whatever I actually shipped.</p>
+    <img src="https://ghchart.rshah.org/D88A4E/Hanningtone03" alt="GitHub contribution graph" style="width:100%; margin-top:24px; border-radius:6px; border:1px solid var(--rule);">
+  </section>
+
   <section id="open-source" class="reveal">
     <div class="eyebrow">contribution</div>
     <h2>Open Source Contributions</h2>
@@ -676,7 +702,7 @@
     </div>
   </div>
   <footer>
-    <span id="uptimeCounter">calculating...</span>    <a href="https://github.com/Hanningtone03" target="_blank">github.com/Hanningtone03</a>
+    <span id="uptimeCounter">calculating...</span> · <span id="timeCompare"></span>    <a href="https://github.com/Hanningtone03" target="_blank">github.com/Hanningtone03</a>
   </footer>
   <button id="themeToggle" style="position:fixed; bottom:20px; left:140px; background:var(--paper-raised); border:1px solid var(--rule); color:var(--slate); font-family:var(--mono); font-size:11px; padding:8px 12px; border-radius:6px; cursor:pointer;">☀️ light mode</button>
   <button id="soundToggle" style="position:fixed; bottom:20px; left:20px; background:var(--paper-raised); border:1px solid var(--rule); color:var(--slate); font-family:var(--mono); font-size:11px; padding:8px 12px; border-radius:6px; cursor:pointer;">🔇 sound off</button>
@@ -791,6 +817,7 @@
   }
   if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) animateHero();
   
+  document.getElementById('countUp').classList.add('pulse');
   let count = 0;
   const countEl = document.getElementById('countUp');
   const countTarget = 23;
@@ -878,6 +905,7 @@
             ${p.name}
             <span class="lang-badge">.${p.lang}</span>
             ${p.flagship ? '<span class="flagship-tag">flagship</span>' : ''}
+            <span style="font-family:var(--mono); font-size:10px; color:var(--slate-light);">${'●'.repeat(p.flagship ? 5 : 3)}${'○'.repeat(5 - (p.flagship ? 5 : 3))}</span>
           </div>
           <span class="entry-chevron">›</span>
         </div>
@@ -895,6 +923,14 @@
       manifest.appendChild(entry);
     });
   }
+
+  function updateTimeCompare() {
+    const nairobi = new Date().toLocaleTimeString('en-GB', { timeZone: 'Africa/Nairobi', hour: '2-digit', minute: '2-digit' });
+    const local = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('timeCompare').textContent = `Nairobi ${nairobi} · you ${local}`;
+  }
+  updateTimeCompare();
+  setInterval(updateTimeCompare, 60000);
 
   const startDate = new Date('2026-06-06T00:00:00Z');
   function updateUptime() {
@@ -921,6 +957,18 @@
       });
     })
     .catch(() => {});
+  fetch('https://api.github.com/users/Hanningtone03/events/public')
+    .then(r => r.json())
+    .then(events => {
+      const push = events.find(e => e.type === 'PushEvent');
+      if (push && push.payload.commits && push.payload.commits.length) {
+        const badge = document.getElementById('buildingBadge');
+        badge.textContent = '● recently pushed to ' + push.repo.name.split('/')[1];
+        badge.style.display = 'block';
+      }
+    })
+    .catch(() => {});
+
   renderFilters('all');
   renderManifest();
   function drawCanvasFor(canvas, lang) {
@@ -1022,6 +1070,18 @@
   }, { threshold: 0.12 });
 
   revealEls.forEach(el => observer.observe(el));
+  document.querySelectorAll('.nav-fade').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.body.style.transition = 'opacity 0.2s';
+      document.body.style.opacity = '0.3';
+      setTimeout(() => {
+        document.querySelector(link.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
+        document.body.style.opacity = '1';
+      }, 200);
+    });
+  });
+
   const trackerDots = document.querySelectorAll('.tracker-dot');
   trackerDots.forEach(dot => {
     dot.addEventListener('click', () => {
@@ -1167,7 +1227,9 @@
 
   function openModal(p) {
     document.getElementById('modalTitle').textContent = p.name;
-    document.getElementById('modalDesc').textContent = p.desc;
+    const words = p.desc.split(' ').length;
+    const readTime = Math.max(1, Math.round(words / 3));
+    document.getElementById('modalDesc').textContent = p.desc + `  (~${readTime}s read)`;
     document.getElementById('modalLangBadge').textContent = '.' + p.lang;
     document.getElementById('modalLink').href = p.url;
     modal.style.display = 'flex';
