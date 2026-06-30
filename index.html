@@ -33,8 +33,8 @@
     --ink-soft: #C7C2B6;
     --slate: #8B9099;
     --slate-light: #5C6370;
-    --amber: #D88A4E;
-    --amber-dim: #8A5A33;
+    --amber: #5B8DEF;
+    --amber-dim: #2E4E8C;
     --rule: #2B313D;
     --rule-strong: #3A4250;
     --mono: 'IBM Plex Mono', monospace;
@@ -139,11 +139,13 @@
 
   .type-line {
     font-family: var(--mono);
-    font-size: clamp(22px, 4.5vw, 34px);
-    font-weight: 500;
-    color: var(--ink);
+    font-size: clamp(26px, 5vw, 40px);
+    font-weight: 700;
+    color: var(--amber);
     white-space: pre-wrap;
     line-height: 1.5;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
   }
 
   .type-line .prompt { color: var(--amber); }
@@ -607,7 +609,7 @@
   <div id="bootText" style="white-space:pre-line;"></div>
 <div style="position:absolute; inset:0; background:repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 2px); pointer-events:none;"></div>
 </div>
-<canvas id="heroCanvas" style="position:fixed; top:0; left:0; width:100%; height:100vh; z-index:-1; opacity:0.35;"></canvas> 
+<canvas id="heroCanvas" style="position:fixed; top:0; left:0; width:100%; height:100vh; z-index:-1; opacity:0.7;"></canvas> 
  <header>
     <div class="term-bar">
       <span class="dot"></span><span class="dot"></span><span class="dot"></span>
@@ -670,7 +672,7 @@
 
   <section id="activity" class="reveal">
     <div class="eyebrow">Activity</div>
-    <h2>What the graph looks like</h2>
+    <h2>Activity Graph</h2>
     <p class="section-intro">No padding, no gaming the streak. Just whatever I actually shipped.</p>
     <img src="https://ghchart.rshah.org/D88A4E/Hanningtone03" alt="GitHub contribution graph" style="width:100%; margin-top:24px; border-radius:6px; border:1px solid var(--rule);">
   </section>
