@@ -1065,7 +1065,6 @@
     }
   }
   bootStep();
-  let charIndex = 0;
   function typeChar() {
     if (charIndex <= fullText.length) {
       typeEl.innerHTML = `<span class="cmd">${fullText.slice(0, charIndex)}</span><span class="cursor"></span>`;
